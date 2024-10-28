@@ -13,7 +13,7 @@
 #'
 #' @examples
 annoSpecies_df <- function(){
-  annoSpecies_df <-
+  annoSpecies_df <- 
     data.frame(
       species = c(
         "", "Anopheles", "Arabidopsis", "Bovine", "Worm",
@@ -21,7 +21,7 @@ annoSpecies_df <- function(){
         "E coli strain Sakai", "Chicken", "Human", "Mouse",
         "Rhesus", "Malaria", "Chimp", "Rat",
         "Yeast", "Streptomyces coelicolor", "Pig", "Toxoplasma gondii",
-        "Xenopus"
+        "Xenopus", "Staphylococcus aureus"
       ),
       pkg = c(
         "", "org.Ag.eg.db", "org.At.tair.db", "org.Bt.eg.db", "org.Ce.eg.db",
@@ -29,36 +29,36 @@ annoSpecies_df <- function(){
         "org.EcSakai.eg.db", "org.Gg.eg.db", "org.Hs.eg.db", "org.Mm.eg.db",
         "org.Mmu.eg.db", "org.Pf.plasmo.db", "org.Pt.eg.db", "org.Rn.eg.db",
         "org.Sc.sgd.db", "org.Sco.eg.db", "org.Ss.eg.db", "org.Tgondii.eg.db",
-        "org.Xl.eg.db"
+        "org.Xl.eg.db", "org.SStaphylococcusaureus.eg.db"
       ),
       stringsAsFactors = FALSE
     )
-  annoSpecies_df$organism = c("", "aga", "ath", "bta", "cel", "cfa", "dme", "dre", "eco", "ecs", "gga", "hsa", "mmu", "mcc", "pfa", "ptr", "rno", "sce", "sco", "ssc", "tgo", "xla")
-
+  annoSpecies_df$organism = c("", "aga", "ath", "bta", "cel", "cfa", "dme", "dre", "eco", "ecs", "gga", "hsa", "mmu", "mcc", "pfa", "ptr", "rno", "sce", "sco", "ssc", "tgo", "xla", "sau")
+  
   annoSpecies_df <- annoSpecies_df[order(annoSpecies_df$species), ]
   annoSpecies_df$reactome_organism = c("","anopheles", "arabidopsis", "bovine", "canine", "chicken", "chimp", "ecolik12", "ecsakai", "fly", "human",
-                                       "malaria", "mouse", "pig", "rat", "rhesus", "coelicolor", "gondii", "celegans", "xenopus", "yeast", "zebrafish")
+                                       "malaria", "mouse", "pig", "rat", "rhesus", "coelicolor", "gondii", "celegans", "xenopus", "yeast", "zebrafish", "s aureus")
   annoSpecies_df$msigdbr_species = c("","","","Bos taurus", "Canis lupus familiaris", "Gallus gallus", "Pan troglodytes",
                                      "","","Drosophila melanogaster", "Homo sapiens","", "Mus musculus", "Sus scrofa",
                                      "Rattus norvegicus", "Macaca mulatta", "", "", "Caenorhabditis elegans", "Xenopus tropicalis",
-                                     "Saccharomyces cerevisiae", "Danio rerio")
-
+                                     "Saccharomyces cerevisiae", "Danio rerio", "Staphylococcus aureus")
+  
   string_spe <- c( "Anopheles" = "7165", "Arabidopsis" = "3702", "Bovine" = "9913",
                    "Worm" = "6239", "Canine" = "9612", "Fly" = "7227", "Zebrafish" = "7955",
                    "E coli strain K12" = "511145", "Chicken" = "9031", "Human" = "9606",
                    "Mouse" = "10090", "Rhesus" = "9544", "Malaria" = "5833", "Chimp" = "9598",
                    "Rat" = "10116", "Yeast" = "4932", "Streptomyces coelicolor" = "100226",
-                   "Pig" = "9823", "Toxoplasma gondii" = "5811", "Xenopus" = "8364")
+                   "Pig" = "9823", "Toxoplasma gondii" = "5811", "Xenopus" = "8364", "Staphylococcus aureus" = "93061")
   annoSpecies_df$speciesID = string_spe[match(annoSpecies_df$species, names(string_spe))]
   annoSpecies_df$speciesID[is.na(annoSpecies_df$speciesID)] = ""
   rownames(annoSpecies_df) <- annoSpecies_df$species
-
+  
   ## filter out some unusual species
   annoSpecies_df = annoSpecies_df[which(annoSpecies_df$msigdbr_species != ""),]
-  species_order = c("Human","Mouse", "Rat", "Yeast", "Pig", "Zebrafish")
+  species_order = c("Human","Mouse", "Rat", "Yeast", "Pig", "Zebrafish", "Staphylococcus aureus")
   species_order = c(species_order, annoSpecies_df$species[!annoSpecies_df$species %in% species_order])
   annoSpecies_df = annoSpecies_df[match(species_order,annoSpecies_df$species),]
-
+  
   return(annoSpecies_df)
 }
 
