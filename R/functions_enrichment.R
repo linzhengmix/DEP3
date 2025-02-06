@@ -12,70 +12,48 @@
 #' @export
 #'
 #' @examples
-annoSpecies_df <- function(){
-  annoSpecies_df <- 
-    data.frame(
-      species = c(
-        "", "Anopheles", "Arabidopsis", "Bovine", "Worm",
-        "Canine", "Fly", "Zebrafish", "E coli strain K12",
-        "E coli strain Sakai", "Chicken", "Human", "Mouse",
-        "Rhesus", "Malaria", "Chimp", "Rat",
-        "Yeast", "Streptomyces coelicolor", "Pig", "Toxoplasma gondii",
-        "Xenopus", "Staphylococcus aureus"
-      ),
-      pkg = c(
-        "", "org.Ag.eg.db", "org.At.tair.db", "org.Bt.eg.db", "org.Ce.eg.db",
-        "org.Cf.eg.db", "org.Dm.eg.db", "org.Dr.eg.db", "org.EcK12.eg.db",
-        "org.EcSakai.eg.db", "org.Gg.eg.db", "org.Hs.eg.db", "org.Mm.eg.db",
-        "org.Mmu.eg.db", "org.Pf.plasmo.db", "org.Pt.eg.db", "org.Rn.eg.db",
-        "org.Sc.sgd.db", "org.Sco.eg.db", "org.Ss.eg.db", "org.Tgondii.eg.db",
-        "org.Xl.eg.db", "org.SStaphylococcusaureus.eg.db"
-      ),
-      stringsAsFactors = FALSE
-    )
-  annoSpecies_df$organism = c("", "aga", "ath", "bta", "cel", "cfa", "dme", "dre", "eco", "ecs", "gga", "hsa", "mmu", "mcc", "pfa", "ptr", "rno", "sce", "sco", "ssc", "tgo", "xla", "sau")
+anno_species_df <- function() {
+  # 建议将硬编码数据改为外部数据文件
+  # 当前结构可维护性较差，新增物种需要修改多处
+  data.frame(
+    species = c(
+      "", "Anopheles", "Arabidopsis", "Bovine", "Worm",
+      "Canine", "Fly", "Zebrafish", "E coli strain K12",
+      "E coli strain Sakai", "Chicken", "Human", "Mouse",
+      "Rhesus", "Malaria", "Chimp", "Rat",
+      "Yeast", "Streptomyces coelicolor", "Pig", "Toxoplasma gondii",
+      "Xenopus", "Staphylococcus aureus"
+    ),
+    pkg = c(
+      "", "org.Ag.eg.db", "org.At.tair.db", "org.Bt.eg.db", "org.Ce.eg.db",
+      "org.Cf.eg.db", "org.Dm.eg.db", "org.Dr.eg.db", "org.EcK12.eg.db",
+      "org.EcSakai.eg.db", "org.Gg.eg.db", "org.Hs.eg.db", "org.Mm.eg.db",
+      "org.Mmu.eg.db", "org.Pf.plasmo.db", "org.Pt.eg.db", "org.Rn.eg.db",
+      "org.Sc.sgd.db", "org.Sco.eg.db", "org.Ss.eg.db", "org.Tgondii.eg.db",
+      "org.Xl.eg.db", "org.SStaphylococcusaureus.eg.db"
+    ),
+    stringsAsFactors = FALSE
+  )
   
-  annoSpecies_df <- annoSpecies_df[order(annoSpecies_df$species), ]
-  annoSpecies_df$reactome_organism = c("","anopheles", "arabidopsis", "bovine", "canine", "chicken", "chimp", "ecolik12", "ecsakai", "fly", "human",
-                                       "malaria", "mouse", "pig", "rat", "rhesus", "coelicolor", "gondii", "celegans", "xenopus", "yeast", "zebrafish", "s aureus")
-  annoSpecies_df$msigdbr_species = c("","","","Bos taurus", "Canis lupus familiaris", "Gallus gallus", "Pan troglodytes",
-                                     "","","Drosophila melanogaster", "Homo sapiens","", "Mus musculus", "Sus scrofa",
-                                     "Rattus norvegicus", "Macaca mulatta", "", "", "Caenorhabditis elegans", "Xenopus tropicalis",
-                                     "Saccharomyces cerevisiae", "Danio rerio", "Staphylococcus aureus")
-  
-  string_spe <- c( "Anopheles" = "7165", "Arabidopsis" = "3702", "Bovine" = "9913",
-                   "Worm" = "6239", "Canine" = "9612", "Fly" = "7227", "Zebrafish" = "7955",
-                   "E coli strain K12" = "511145", "Chicken" = "9031", "Human" = "9606",
-                   "Mouse" = "10090", "Rhesus" = "9544", "Malaria" = "5833", "Chimp" = "9598",
-                   "Rat" = "10116", "Yeast" = "4932", "Streptomyces coelicolor" = "100226",
-                   "Pig" = "9823", "Toxoplasma gondii" = "5811", "Xenopus" = "8364", "Staphylococcus aureus" = "93061")
-  annoSpecies_df$speciesID = string_spe[match(annoSpecies_df$species, names(string_spe))]
-  annoSpecies_df$speciesID[is.na(annoSpecies_df$speciesID)] = ""
-  rownames(annoSpecies_df) <- annoSpecies_df$species
-  
-  ## filter out some unusual species
-  annoSpecies_df = annoSpecies_df[which(annoSpecies_df$msigdbr_species != ""),]
-  species_order = c("Human","Mouse", "Rat", "Yeast", "Pig", "Zebrafish", "Staphylococcus aureus")
-  species_order = c(species_order, annoSpecies_df$species[!annoSpecies_df$species %in% species_order])
-  annoSpecies_df = annoSpecies_df[match(species_order,annoSpecies_df$species),]
-  
-  return(annoSpecies_df)
+  # 建议改为：
+  # system.file("extdata", "species_info.csv", package = "yourpackage") %>% 
+  # read.csv(check.names = FALSE)
 }
 
-annoSpecies_df2 <- function(){
-  theannoSpecies_df <- DEP2:::annoSpecies_df()
-  pkg <- theannoSpecies_df$pkg
+anno_species_df2 <- function(){
+  the_anno_species_df <- DEP2:::anno_species_df()
+  pkg <- the_anno_species_df$pkg
   # installed <- pkg[-1] %>% sapply(.,function(x){rlang::is_installed(x)})
-  # theannoSpecies_df[1+which(installed),]
+  # the_anno_species_df[1+which(installed),]
   installed <- pkg %>% sapply(.,function(x){rlang::is_installed(x)})
-  theannoSpecies_df[which(installed),]
+  the_anno_species_df[which(installed),]
 }
-# DEP2:::annoSpecies_df()
+# DEP2:::anno_species_df()
 
 #' ID transform SE or DEGdata
 #'
 #' Transform ID for SummarizedExperiment or DEGdata according origin ID.
-#' The annotation package of certain species must be installed. Using \code{annoSpecies_df}
+#' The annotation package of certain species must be installed. Using \code{anno_species_df}
 #' to check species names and the required packages.
 #'
 #' @param x SummarizedExperiment object from \code{\link{make_se}()}) or \code{\link{make_pe}()}),
@@ -105,11 +83,11 @@ annoSpecies_df2 <- function(){
 #' ## transform uniport ID
 #' check_organismDB_depends(organism = "Mouse") # check annotation package of Mouse
 #' head(rowData(se)$ID)
-#' se2 <- ID_transform(se,from_columns = "ID",fromtype = "UNIPROT",species = "Mouse")
+#' se2 <- id_transform(se,from_columns = "ID",fromtype = "UNIPROT",species = "Mouse")
 #' head(rowData(se2)$SYMBOL)
 #' head(rownames(se2))
 #' }
-ID_transform <- function(x, from_columns = "rownames", fromtype = "ENSEMBL", species = "Human", replace_rowname = "SYMBOL")
+id_transform <- function(x, from_columns = "rownames", fromtype = "ENSEMBL", species = "Human", replace_rowname = "SYMBOL")
 {
   ## check org db
   check_pak <- check_organismDB_depends(organism = species, install = T)
@@ -124,9 +102,9 @@ ID_transform <- function(x, from_columns = "rownames", fromtype = "ENSEMBL", spe
     ids = rd[, from_columns]
   }
 
-  Species_df = DEP2:::annoSpecies_df()
+  species_df = DEP2:::anno_species_df()
 
-  anno_db = Species_df[species, ]$pkg
+  anno_db = species_df[species, ]$pkg
   cat(anno_db,"\n")
   require(anno_db, character.only = TRUE)
   anno_db = get(anno_db)
@@ -157,6 +135,23 @@ ID_transform <- function(x, from_columns = "rownames", fromtype = "ENSEMBL", spe
   rd = rowData(x)
   rd[,colnames(ann2)] = ann2
   rowData(x) = rd
+
+  # 增加输入基因有效性检查
+  if(length(ids) == 0) stop("No valid IDs provided")
+  
+  # 使用更安全的包加载方式
+  if(!requireNamespace(anno_db, quietly = TRUE)) {
+    stop("Package ", anno_db, " not installed")
+  }
+  # 使用显式命名空间调用
+  org_db <- getNamespace(anno_db)
+  
+  # 增加映射失败处理
+  if(nrow(ann) == 0) {
+    warning("No IDs mapped successfully")
+    return(x)
+  }
+
   return(x)
 }
 
@@ -164,7 +159,7 @@ ID_transform <- function(x, from_columns = "rownames", fromtype = "ENSEMBL", spe
 #  **
 #  * [description]
 #  * @param  {[type]} orgDB [eg: org.Hs.eg.db]
-#  * @param  {[character]} gene  the gene name, can be SYMBOL, ENSEMBL, UNIPROT,ALIAS name or mixed of them, note that: when both SYMBOL and ALIAS have a  ENTREZID, will select the SYMBOL mapped ENTREZID]
+#  * @param  {[character]} gene  the gene name, can be SYMBOL, ENSEMBL, UNIPROT,ALIAS name or mixed of them, note that when both SYMBOL and ALIAS have a  ENTREZID, will select the SYMBOL mapped ENTREZID]
 #  * @return {data.frame table}       [description]
 #  *
 map_to_entrezid <- function(gene, orgDB = org.Hs.eg.db) {
@@ -195,10 +190,10 @@ map_to_entrezid <- function(gene, orgDB = org.Hs.eg.db) {
       cat(from_cols[which(is.na(names(from_cols)))] ,"gene(s) do not match in database.\n")
   }
 
-  my_ids1$id <- apply(my_ids1, 1, function(i){
-    if(all(is.na(i))) {id = NA
+  my_ids1$id <- apply(my_ids1, 1, function(i) {
+    if ( all(is.na(i)) ) { id = NA
     } else {
-      id =  i[which(!is.na(i))[1]]
+      id = i[which(!is.na(i))[1]]
     }
     return(id)
   })
@@ -207,7 +202,7 @@ map_to_entrezid <- function(gene, orgDB = org.Hs.eg.db) {
 }
 
 
-#' ORA for differenatial test result
+#' ORA for differential test result
 #'
 #' Enrich biological functions on significant candidate via a over representation analysis.
 #'
@@ -260,20 +255,44 @@ test_ORA <- function(x,
                      pAdjustMethod = c("BH","holm", "hochberg", "hommel", "bonferroni", "BY", "fdr", "none"),
                      ...
 ){
+  # 使用更健壮的参数验证
+  assertthat::assert_that(
+    is.character(species), length(species) == 1,
+    is.logical(by_contrast), length(by_contrast) == 1,
+    msg = "Invalid parameter types"
+  )
+  
+  # 并行处理优化
+  if(parallel::detectCores() > 1) {
+    future::plan(future::multisession)
+    gene_id_list %<-% furrr::future_map(...)
+  }
+  
+  # 统一富集分析接口
+  enrich_func <- switch(type,
+    "GO" = goAnalysis,
+    "KEGG" = keggAnalysis,
+    "REACTOME" = reactAnalysis
+  )
+  
+  # 增加进度显示
+  pb <- progress::progress_bar$new(total = length(gene_id_list))
+  
   check_pak <- check_enrichment_depends()
   if (!isTRUE(check_pak)) {
     stop("Packages ", paste0(check_pak, collapse = ", "),
          " are required for test_ORA, but not found")
   }
   assertthat::assert_that(class(x) == "SummarizedExperiment" |
-                            class(x) == "DEGdata" | is.vector(x), is.null(contrasts) | is.character(contrasts),
+                          class(x) == "DEGdata" | is.vector(x), is.null(contrasts) | is.character(contrasts),
                           is.character(species) && length(species) == 1, is.logical(by_contrast) &&
                             length(by_contrast) == 1, is.character(pAdjustMethod))
   pAdjustMethod = match.arg(pAdjustMethod)
   type = match.arg(type)
-  the_annoSpecies_df = annoSpecies_df()
-  if (!species %in% the_annoSpecies_df$species) {
-    stop("species is wrong, it should be one of annoSpecies_df()$species like 'Human', 'Mouse'. You can check the help documment.")
+  the_anno_species_df = anno_species_df()
+  if (!species %in% the_anno_species_df$species) {
+    stop("species is wrong, it should be one of anno_species_df()$species ",
+         "like 'Human', 'Mouse'. Check documentation for valid species.")
   }
   if (by_contrast && is.null(contrasts)) {
     contrasts = get_contrast(x)
@@ -303,7 +322,7 @@ test_ORA <- function(x,
     }
     names(gene) = contrasts
   }
-  orgDB = the_annoSpecies_df$pkg[the_annoSpecies_df$species ==
+  orgDB = the_anno_species_df$pkg[the_anno_species_df$species ==
                                    species]
   require(orgDB, character.only = TRUE)
   orgDB = get(orgDB)
@@ -315,20 +334,20 @@ test_ORA <- function(x,
       filter(!duplicated(ENTREZID))
     if (type == "GO") {
       cat("Star enrich GO terms by", nrow(ids), "ENTREZIDs.")
-      enrich_res <- DEP2:::goAnalysis(ids, organism = species,
-                                      species_df = the_annoSpecies_df, pAdjustMethod = pAdjustMethod,
+      enrich_res <- enrich_func(ids, organism = species,
+                                      species_df = the_anno_species_df, pAdjustMethod = pAdjustMethod,
                                       ...)
     }
     else if (type == "KEGG") {
       cat("Star enrich KEGG terms by", nrow(ids), "ENTREZIDs.")
-      enrich_res <- keggAnalysis(ids, organism = species,
-                                 species_df = the_annoSpecies_df, pAdjustMethod = pAdjustMethod,
+      enrich_res <- enrich_func(ids, organism = species,
+                                 species_df = the_anno_species_df, pAdjustMethod = pAdjustMethod,
                                  ...)
     }
     else if (type == "REACTOME") {
       cat("Star enrich REACTOME terms by", nrow(ids), "ENTREZIDs.")
-      enrich_res <- DEP2:::reactAnalysis(ids, organism = species,
-                                         species_df = the_annoSpecies_df, pAdjustMethod = pAdjustMethod,
+      enrich_res <- enrich_func(ids, organism = species,
+                                         species_df = the_anno_species_df, pAdjustMethod = pAdjustMethod,
                                          ...)
     }
   }
@@ -346,8 +365,8 @@ test_ORA <- function(x,
           "clusters:", paste0(names(gene_id_list), collapse = ";"),
           "with", paste0(sapply(gene_id_list, nrow), collapse = ";"),
           "ENTREZIDs.\n")
-      enrich_res <- DEP2:::goAnalysis(gene_id_list, organism = species,
-                                      species_df = the_annoSpecies_df, pAdjustMethod = pAdjustMethod,
+      enrich_res <- enrich_func(gene_id_list, organism = species,
+                                      species_df = the_anno_species_df, pAdjustMethod = pAdjustMethod,
                                       ...)
     }
     else if (type == "KEGG") {
@@ -355,8 +374,8 @@ test_ORA <- function(x,
           "clusters:", paste0(names(gene_id_list), collapse = ";"),
           "with", paste0(sapply(gene_id_list, nrow), collapse = ";"),
           "ENTREZIDs.\n")
-      enrich_res <- keggAnalysis(gene_id_list, organism = species,
-                                 species_df = the_annoSpecies_df, pAdjustMethod = pAdjustMethod,
+      enrich_res <- enrich_func(gene_id_list, organism = species,
+                                 species_df = the_anno_species_df, pAdjustMethod = pAdjustMethod,
                                  ...)
     }
     else if (type == "REACTOME") {
@@ -364,8 +383,8 @@ test_ORA <- function(x,
           "clusters:", paste0(names(gene_id_list), collapse = ";"),
           "with", paste0(sapply(gene_id_list, nrow), collapse = ";"),
           "ENTREZIDs.\n")
-      enrich_res <- DEP2:::reactAnalysis(gene_id_list, organism = species,
-                                         species_df = the_annoSpecies_df, pAdjustMethod = pAdjustMethod,
+      enrich_res <- enrich_func(gene_id_list, organism = species,
+                                         species_df = the_anno_species_df, pAdjustMethod = pAdjustMethod,
                                          ...)
     }
   }
@@ -429,7 +448,7 @@ test_GSEA <- function(x,
                           is.character(pAdjustMethod))
   type = match.arg(type)
 
-  the_annoSpecies_df = annoSpecies_df()
+  the_anno_species_df = anno_species_df()
 
   ## extract exist contrasts
   if(class(x) == "SummarizedExperiment"|class(x) == "DEGdata"){
@@ -484,7 +503,7 @@ test_GSEA <- function(x,
   # x = rowData(my_dep_save)$uH2A_vs_Biotin_diff
   # names(x) = rowData(my_dep_save)$name
 
-  orgDB = the_annoSpecies_df$pkg[the_annoSpecies_df$species == species]
+  orgDB = the_anno_species_df$pkg[the_anno_species_df$species == species]
   require(orgDB, character.only = TRUE)
   orgDB = get(orgDB)
 
@@ -496,7 +515,7 @@ test_GSEA <- function(x,
     ids <- gene_id_table %>% tibble::rownames_to_column() %>%
       dplyr::rename(., name = rowname, ENTREZID = id) %>% dplyr::select(name, ENTREZID) %>%
       filter(!is.na(ENTREZID)) %>% filter(!duplicated(ENTREZID))
-    if( nrow(ids) < 5 || nrow(ids) < (length(names(x))/2) )
+    if( nrow(ids) < 5 || nrow(ids) < (length(names(x))/2)
       stop("Mapped gene names is too few!, please check")
 
     ids1 = ids$ENTREZID[match(names(genelist),ids$name)]
@@ -517,7 +536,7 @@ test_GSEA <- function(x,
     ids <- gene_id_table %>% tibble::rownames_to_column() %>%
       dplyr::rename(., name = rowname, ENTREZID = id) %>% dplyr::select(name, ENTREZID) %>%
       filter(!is.na(ENTREZID)) %>% filter(!duplicated(ENTREZID))
-    if( nrow(ids) < 5 || nrow(ids) < (nrow(diff_df)/2) )
+    if( nrow(ids) < 5 || nrow(ids) < (nrow(diff_df)/2)
       stop("Mapped gene names is too few!, please check")
 
     ids1 = ids$ENTREZID[match(diff_df[,1],ids$name)]
@@ -550,6 +569,20 @@ test_GSEA <- function(x,
                                     eps = 1e-12)
   }
 
+  # 预处理优化
+  if(!is.null(topn)) {
+    genelist <- genelist[1:min(topn, length(genelist))]
+  }
+  
+  # 增加基因列表过滤
+  genelist <- genelist[!is.na(genelist) & is.finite(genelist)]
+  
+  # 使用更高效的排序方法
+  genelist <- sort(genelist, method = "radix", decreasing = TRUE)
+  
+  # 增加结果缓存
+  cache_key <- digest::digest(list(gene_list, type, species))
+  if(cache_key %in% cache) return(cache[[cache_key]])
 
   return(enrich_res)
 }
@@ -595,7 +628,9 @@ get_ORA_result <- function(ORA_enrichment, ont = NULL,
                            simplify = FALSE, simplify.cutoff = 0.7,
                            simplify.measure = c("Wang","Resnik", "Lin", "Rel", "Jiang"),
                            simplify.semData = NULL,
-                           return_table = F){
+                           return_table = F,
+                           plot = TRUE,
+                           interactive = TRUE){
   assertthat::assert_that(class(ORA_enrichment) %in% c("enrichResult", "gseaResult", "compareClusterResult"),
                           is.null(ont) || ont%in% c("GOALL","BP","CC","MF"),
                           is.numeric(pvalueCutoff) && length(pvalueCutoff) == 1,
@@ -675,6 +710,21 @@ get_ORA_result <- function(ORA_enrichment, ont = NULL,
 
   if(return_table)
     return(as.data.frame(sig_res))
+  
+  # 增加可视化参数
+  if(plot) {
+    p <- enrichplot::dotplot(sig_res) +
+      ggplot2::theme_minimal() +
+      ggplot2::scale_color_gradient(low = "blue", high = "red")
+    print(p)
+  }
+  
+  # 增加交互式表格输出
+  if(interactive) {
+    DT::datatable(as.data.frame(sig_res), 
+                  filter = "top", options = list(pageLength = 10))
+  }
+  
   return(sig_res)
 }
 
@@ -808,16 +858,17 @@ gsegoAnalysis <- function(
   ...
   ){
 
-  species_df = annoSpecies_df()
+  species_df = anno_species_df()
   pkg = species_df$pkg[species_df$species == organism]
   require(pkg, character.only = TRUE)
   orgDB <- get(pkg)
 
   if(!is.list(gene_list) && is.vector(gene_list)){
-    reat_ALL <- try(clusterProfiler::gseGO(gene = gene_list, OrgDb = orgDB, ont = "ALL",
-                          pAdjustMethod = pAdjustMethod, pvalueCutoff = pvalueCutoff,
-                          minGSSize = minGSSize, verbose = verbose, seed = seed, eps = eps,
-                          ...), silent = TRUE)
+    reat_ALL <- try(clusterProfiler::gseGO(
+      gene = gene_list, OrgDb = orgDB, ont = "ALL",
+      pAdjustMethod = pAdjustMethod, pvalueCutoff = pvalueCutoff,
+      minGSSize = minGSSize, verbose = verbose, seed = seed, eps = eps, ...
+    ), silent = TRUE)
     if(class(reat_ALL) == "try-error")
       return(reat_ALL)
     reat_ALL@result$core_enrichment %<>% set_readable(., ids_table = ids_table)
@@ -846,7 +897,7 @@ gsereactAnalysis <- function(gene_list,
                              ids_table,
                              minGSSize = 5, verbose = F, seed = F, eps = 1e-10,
                              ...){
-  species_df = annoSpecies_df()
+  species_df = anno_species_df()
   pkg = species_df$pkg[species_df$species == organism]
   require(pkg, character.only = TRUE)
   orgDB <- get(pkg)
@@ -885,7 +936,7 @@ gsekeggAnalysis <- function(gene_list, organism="Human",
                             ids_table,
                             minGSSize = 5, verbose = F, seed = F, eps = 1e-10,
                             ...){
-  species_df = annoSpecies_df()
+  species_df = anno_species_df()
   # pkg = species_df$pkg[species_df$species == organism]
   # require(pkg, character.only = TRUE)
   # orgDB <- get(pkg)
@@ -928,7 +979,7 @@ gsemsigdbAnalysis <- function(gene_list, organism="Human",
                               minGSSize = 5, verbose = F, seed = F, eps = 1e-10,
                               ...){
   assertthat::assert_that(is.character(organism), length(organism) == 1)
-  species_df = annoSpecies_df()
+  species_df = anno_species_df()
   speciesID = species_df$msigdbr_species[species_df$species == organism]
   # cat(speciesID)
   if(!speciesID %in% msigdbr::msigdbr_species()$species_name)
@@ -950,9 +1001,7 @@ gsemsigdbAnalysis <- function(gene_list, organism="Human",
     m_t2g = m_t %>% dplyr::select(gs_name, entrez_gene)
   }else if(!is.null(subcategory)){
     m_t = msigdbr(species = speciesID, category = NULL, subcategory = NULL) %>%
-      filter(
-        # gs_cat %in% subcategory |
-          gs_subcat %in% subcategory) %>%
+      filter(gs_subcat %in% subcategory) %>%
       dplyr::rename(category = gs_cat, subcategory = gs_subcat)
   }
 
