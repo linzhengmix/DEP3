@@ -13,9 +13,10 @@
 #'
 #' @examples
 anno_species_df <- function() {
-  # 建议将硬编码数据改为外部数据文件
-  # 当前结构可维护性较差，新增物种需要修改多处
-  data.frame(
+  # 推荐使用外部配置文件
+  # system.file("extdata", "species_info.csv", package = "yourpackage") %>% 
+  # read.csv(check.names = FALSE)
+  species_info <- data.frame(
     species = c(
       "", "Anopheles", "Arabidopsis", "Bovine", "Worm",
       "Canine", "Fly", "Zebrafish", "E coli strain K12",
@@ -34,10 +35,6 @@ anno_species_df <- function() {
     ),
     stringsAsFactors = FALSE
   )
-  
-  # 建议改为：
-  # system.file("extdata", "species_info.csv", package = "yourpackage") %>% 
-  # read.csv(check.names = FALSE)
 }
 
 anno_species_df2 <- function(){
@@ -45,7 +42,7 @@ anno_species_df2 <- function(){
   pkg <- the_anno_species_df$pkg
   # installed <- pkg[-1] %>% sapply(.,function(x){rlang::is_installed(x)})
   # the_anno_species_df[1+which(installed),]
-  installed <- pkg %>% sapply(.,function(x){rlang::is_installed(x)})
+  installed <- purrr::map_lgl(pkg, rlang::is_installed)
   the_anno_species_df[which(installed),]
 }
 # DEP2:::anno_species_df()
@@ -90,14 +87,14 @@ anno_species_df2 <- function(){
 id_transform <- function(x, from_columns = "rownames", fromtype = "ENSEMBL", species = "Human", replace_rowname = "SYMBOL")
 {
   ## check org db
-  check_pak <- check_organismDB_depends(organism = species, install = T)
-  if(!isTRUE(check_pak)){
-    stop("Packages ",paste0(check_pak,collapse = ", ")," are required for ID transform but not found")
+  check_pak <- check_organismDB_depends(organism = species, install = TRUE)
+  if (!isTRUE(check_pak)) {
+    stop("Packages ", paste0(check_pak, collapse = ", "), " are required for ID transform but not found")
   }
 
-  if(from_columns == "rownames"){
-    ids = rownames(x)
-  }else{
+  if (from_columns == "rownames") {
+    ids <- rownames(x)
+  } else {
     rd = rowData(x)
     ids = rd[, from_columns]
   }
@@ -105,17 +102,21 @@ id_transform <- function(x, from_columns = "rownames", fromtype = "ENSEMBL", spe
   species_df = DEP2:::anno_species_df()
 
   anno_db = species_df[species, ]$pkg
-  cat(anno_db,"\n")
-  require(anno_db, character.only = TRUE)
-  anno_db = get(anno_db)
+  message("Using annotation database: ", anno_db)
+  
+  if (!requireNamespace(anno_db, quietly = TRUE)) {
+    stop("Required package ", anno_db, " not installed")
+  }
+  org_db <- getNamespace(anno_db)
   # anno_db = eval(parse(text = paste0(anno_db,"::",anno_db)))
 
-  columns <- keytypes(anno_db)
+  columns <- AnnotationDbi::keytypes(org_db)
   columns <- intersect(c("SYMBOL", "ENTREZID", "UNIPROT", "ENSEMBL"), columns)
   # columns <- columns[which(columns != input$idtype)]
-  ann <- try(AnnotationDbi::select(anno_db, keys = ids, column = columns, keytype = fromtype, multiVals = "first"))
-  if(class(ann) == "try-error"){
-    stop("Mapping ID failed, please check your input")
+  ann <- try(AnnotationDbi::select(org_db, keys = ids, column = columns, keytype = fromtype, multiVals = "first"))
+  if (inherits(ann, "try-error")) {
+    msg <- conditionMessage(attr(ann, "condition"))
+    stop("ID mapping failed: ", msg)
   }
 
   ann = ann[!duplicated(ann[, fromtype]), ]
@@ -123,7 +124,7 @@ id_transform <- function(x, from_columns = "rownames", fromtype = "ENSEMBL", spe
 
   rownames(x) = ifelse(!is.na(ann2[,replace_rowname]),make.unique(ann2[,replace_rowname]),rownames(x))
 
-  if(class(x) == "DEGdata"){
+  if (inherits(x, "DEGdata")) {
     x@geneinfo = ann2
     if( !is.null(x@test_result) && nrow(x@test_result) == nrow(x)){
       x@test_result$symbol = ann2$SYMBOL
@@ -140,11 +141,11 @@ id_transform <- function(x, from_columns = "rownames", fromtype = "ENSEMBL", spe
   if(length(ids) == 0) stop("No valid IDs provided")
   
   # 使用更安全的包加载方式
-  if(!requireNamespace(anno_db, quietly = TRUE)) {
-    stop("Package ", anno_db, " not installed")
+  if(!requireNamespace(org_db, quietly = TRUE)) {
+    stop("Package ", org_db, " not installed")
   }
   # 使用显式命名空间调用
-  org_db <- getNamespace(anno_db)
+  org_db <- getNamespace(org_db)
   
   # 增加映射失败处理
   if(nrow(ann) == 0) {
@@ -158,16 +159,16 @@ id_transform <- function(x, from_columns = "rownames", fromtype = "ENSEMBL", spe
 
 #  **
 #  * [description]
-#  * @param  {[type]} orgDB [eg: org.Hs.eg.db]
-#  * @param  {[character]} gene  the gene name, can be SYMBOL, ENSEMBL, UNIPROT,ALIAS name or mixed of them, note that when both SYMBOL and ALIAS have a  ENTREZID, will select the SYMBOL mapped ENTREZID]
+#  * @param org_db OrgDb object, e.g. org.Hs.eg.db
+#  * @param gene Character vector of gene identifiers to map
 #  * @return {data.frame table}       [description]
 #  *
-map_to_entrezid <- function(gene, orgDB = org.Hs.eg.db) {
+map_to_entrez_id <- function(gene, org_db = org.Hs.eg.db) {
 
-  try_key = intersect(c("SYMBOL", "ENSEMBL", "UNIPROT", "ALIAS"),columns(orgDB))
+  try_key = intersect(c("SYMBOL", "ENSEMBL", "UNIPROT", "ALIAS"),columns(org_db))
 
   ids_lis = try_key %>% lapply(., function(x){
-    suppressMessages(try(mapIds(x = orgDB, keys = gene, keytype = x, column = "ENTREZID"), silent = TRUE))
+    suppressMessages(try(mapIds(x = org_db, keys = gene, keytype = x, column = "ENTREZID"), silent = TRUE))
   })
   names(ids_lis) = paste0("from_", try_key)
   ids_lis = ids_lis[ids_lis %>% sapply(., function(x){class(x) != "try-error"})]
@@ -327,7 +328,7 @@ test_ORA <- function(x,
   require(orgDB, character.only = TRUE)
   orgDB = get(orgDB)
   if (!by_contrast) {
-    gene_id_table <- DEP2:::map_to_entrezid(gene, orgDB = orgDB)
+    gene_id_table <- DEP2:::map_to_entrez_id(gene, org_db = orgDB)
     ids <- gene_id_table %>% tibble::rownames_to_column() %>%
       dplyr::rename(., name = rowname, ENTREZID = id) %>%
       dplyr::select(name, ENTREZID) %>% filter(!is.na(ENTREZID)) %>%
@@ -352,12 +353,15 @@ test_ORA <- function(x,
     }
   }
   else {
-    gene_id_list <- gene %>% lapply(., DEP2:::map_to_entrezid, orgDB = orgDB)
-    gene_id_list = gene_id_list %>% lapply(., function(gene_id_table) {
-      gene_id_table %>% tibble::rownames_to_column() %>%
-        dplyr::rename(., name = rowname, ENTREZID = id) %>%
-        dplyr::select(name, ENTREZID) %>% filter(!is.na(ENTREZID))
-    })
+    gene_id_list <- gene %>% 
+      lapply(., DEP2:::map_to_entrez_id, orgDB = orgDB) %>% 
+      lapply(., function(gene_id_table) {
+        gene_id_table %>% 
+          tibble::rownames_to_column() %>%
+          dplyr::rename(., name = rowname, ENTREZID = id) %>%
+          dplyr::select(name, ENTREZID) %>% 
+          filter(!is.na(ENTREZID))
+      })
     gene_id_list = gene_id_list[which(sapply(gene_id_list,
                                              nrow) > 0)]
     if (type == "GO") {
@@ -511,7 +515,7 @@ test_GSEA <- function(x,
     genelist = as.numeric(x)
     names(genelist) = names(x)
     genelist = genelist[!is.na(genelist)]
-    gene_id_table <- map_to_entrezid(names(x), orgDB = orgDB)
+    gene_id_table <- map_to_entrez_id(names(x), org_db = orgDB)
     ids <- gene_id_table %>% tibble::rownames_to_column() %>%
       dplyr::rename(., name = rowname, ENTREZID = id) %>% dplyr::select(name, ENTREZID) %>%
       filter(!is.na(ENTREZID)) %>% filter(!duplicated(ENTREZID))
@@ -532,7 +536,7 @@ test_GSEA <- function(x,
       diff_df[,-1] =  diff_df[,-1, drop = F] %>% apply(., 2, as.numeric)
     }
 
-    gene_id_table <- map_to_entrezid(diff_df[,1], orgDB = orgDB)
+    gene_id_table <- map_to_entrez_id(diff_df[,1], org_db = orgDB)
     ids <- gene_id_table %>% tibble::rownames_to_column() %>%
       dplyr::rename(., name = rowname, ENTREZID = id) %>% dplyr::select(name, ENTREZID) %>%
       filter(!is.na(ENTREZID)) %>% filter(!duplicated(ENTREZID))
@@ -623,7 +627,7 @@ test_GSEA <- function(x,
 #' res_ora <- test_ORA(dep, contrasts = "W4_vs_PBS", species = "Mouse",type = "GO")
 #' res_ora2 <- get_ORA_result(res_ora)
 #' }
-get_ORA_result <- function(ORA_enrichment, ont = NULL,
+filter_enrichment_result <- function(enrichment_result, ont = NULL,
                            pvalueCutoff = 0.05, qvalueCutoff = 0.2,
                            simplify = FALSE, simplify.cutoff = 0.7,
                            simplify.measure = c("Wang","Resnik", "Lin", "Rel", "Jiang"),
@@ -631,7 +635,7 @@ get_ORA_result <- function(ORA_enrichment, ont = NULL,
                            return_table = F,
                            plot = TRUE,
                            interactive = TRUE){
-  assertthat::assert_that(class(ORA_enrichment) %in% c("enrichResult", "gseaResult", "compareClusterResult"),
+  assertthat::assert_that(class(enrichment_result) %in% c("enrichResult", "gseaResult", "compareClusterResult"),
                           is.null(ont) || ont%in% c("GOALL","BP","CC","MF"),
                           is.numeric(pvalueCutoff) && length(pvalueCutoff) == 1,
                           is.numeric(qvalueCutoff) && length(qvalueCutoff) == 1,
@@ -643,17 +647,17 @@ get_ORA_result <- function(ORA_enrichment, ont = NULL,
                           )
   simplify.measure = match.arg(simplify.measure)
   enrich_type = "other"
-  if(class(ORA_enrichment) == "enrichResult"){
-    if(ORA_enrichment@ontology %in% c("GOALL","BP","CC","MF")){
+  if(class(enrichment_result) == "enrichResult"){
+    if(enrichment_result@ontology %in% c("GOALL","BP","CC","MF")){
       enrich_type ="GO"
     } else if(!is.null(ont)){
       message("'ont' only works on GO enrichResult.")
       ont = NULL
     }
-  }else if(class(ORA_enrichment) %in% c("compareClusterResult", "gseaResult")){
-    if( all((ORA_enrichment@compareClusterResult$ONTOLOGY %>% unique) %in% c("BP","CC","MF"))){
+  }else if(class(enrichment_result) %in% c("compareClusterResult", "gseaResult")){
+    if( all((enrichment_result@compareClusterResult$ONTOLOGY %>% unique) %in% c("BP","CC","MF"))){
       enrich_type ="GO"
-      exist_onts = ORA_enrichment@compareClusterResult$ONTOLOGY %>% unique()
+      exist_onts = enrichment_result@compareClusterResult$ONTOLOGY %>% unique()
     } else if(!is.null(ont)){
       message("'ont' only works on GO enrichResult.")
       ont = NULL
@@ -663,19 +667,19 @@ get_ORA_result <- function(ORA_enrichment, ont = NULL,
   filter_enrichResult <- function(x, pvalueCutoff = 1, qvalueCutoff = 1, ont = NULL){
     if(!(is.null(ont) || ont == "GOALL" || ont == "ALL")){
       x = clusterProfiler.dplyr::filter(x, ONTOLOGY == ont)
-      if("ontology" %in% slotNames(ORA_enrichment))
+      if("ontology" %in% slotNames(enrichment_result))
         x@ontology = ont
       if(class(x) == "compareClusterResult")
         x@.call$ont = ont
     }
     x = clusterProfiler.dplyr::filter(x, pvalue <= pvalueCutoff, qvalue <= qvalueCutoff)
-    if(pvalueCutoff %in% slotNames(ORA_enrichment))
+    if(pvalueCutoff %in% slotNames(enrichment_result))
       x@pvalueCutoff = pvalueCutoff
-    if(qvalueCutoff %in% slotNames(ORA_enrichment))
+    if(qvalueCutoff %in% slotNames(enrichment_result))
       x@qvalueCutoff = qvalueCutoff
     return(x)
   }
-  sig_res <- filter_enrichResult(ORA_enrichment, pvalueCutoff, qvalueCutoff, ont)
+  sig_res <- filter_enrichResult(enrichment_result, pvalueCutoff, qvalueCutoff, ont)
   if(nrow(sig_res) == 0){
     message("No result under threashold.")
     return(sig_res)
@@ -748,7 +752,9 @@ goAnalysis <- function( gene_id, organism="Human", species_df,
                         pvalueCutoff = 1, qvalueCutoff = 1,
                         ...){
   pkg = species_df$pkg[species_df$species == organism]
-  require(pkg, character.only = TRUE)
+  if (!requireNamespace(pkg, quietly = TRUE)) {
+    stop("Required package ", pkg, " not installed")
+  }
   orgDB <- get(pkg)
 
   if(class(gene_id) == "data.frame"){
@@ -860,7 +866,9 @@ gsegoAnalysis <- function(
 
   species_df = anno_species_df()
   pkg = species_df$pkg[species_df$species == organism]
-  require(pkg, character.only = TRUE)
+  if (!requireNamespace(pkg, quietly = TRUE)) {
+    stop("Required package ", pkg, " not installed")
+  }
   orgDB <- get(pkg)
 
   if(!is.list(gene_list) && is.vector(gene_list)){
@@ -899,7 +907,9 @@ gsereactAnalysis <- function(gene_list,
                              ...){
   species_df = anno_species_df()
   pkg = species_df$pkg[species_df$species == organism]
-  require(pkg, character.only = TRUE)
+  if (!requireNamespace(pkg, quietly = TRUE)) {
+    stop("Required package ", pkg, " not installed")
+  }
   orgDB <- get(pkg)
 
   organism <- species_df$reactome_organism[species_df$species == organism]
